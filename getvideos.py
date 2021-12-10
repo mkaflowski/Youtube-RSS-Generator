@@ -6,16 +6,17 @@ import generator
 from apiKey import apiKeyList
 import os
 import sys
+from bs4 import BeautifulSoup
 
 catalog_path = os.path.dirname(sys.argv[0])
 
 
-def getVideosIds(key, channe_id, title_filter = None):
+def getVideosIds(key, channel_id, title_filter=None):
     youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=key)
 
     request = youtube.channels().list(
         part="snippet",
-        id=channe_id,
+        id=channel_id,
     )
     response = request.execute()
     print(response)
@@ -29,7 +30,7 @@ def getVideosIds(key, channe_id, title_filter = None):
 
     request = youtube.search().list(
         part="snippet,id",
-        channelId=channe_id,
+        channelId=channel_id,
         maxResults=50,
         type="video",
         order="date"
@@ -41,9 +42,11 @@ def getVideosIds(key, channe_id, title_filter = None):
     items += response["items"]
     if title_filter is not None:
         items = list(filter(lambda it: title_filter.lower() in it["snippet"]["title"].lower(), items))
-    limit = 5
+    limit = 8
     items = items[:limit]
     print(f"total: {len(items)}")
+
+    # return
 
     videos = []
     for item in items:
@@ -58,8 +61,22 @@ def getVideosIds(key, channe_id, title_filter = None):
         date_obj = dt.strptime(published_at, '%Y-%m-%d %H:%M:%S')
         published_at = dt.strftime(date_obj, "%a, %d %b %Y %H:%M:%S +0000")
 
-        yt = YouTube('http://youtube.com/{0}'.format(video_id))
-        url2 = yt.streams.filter(res="480p", file_extension='mp4').first().url
+        url2 = None
+        rss_file_data = getRssData(channel_id)
+        if rss_file_data is not None:
+            url2 = getLinkFromRssFile(video_id, rss_data=rss_file_data)
+        print(url2)
+
+        if url2 is None:
+            yt = YouTube('http://youtube.com/{0}'.format(video_id))
+            stream = yt.streams.filter(res="720p", file_extension='mp4', only_video=False).first()
+            if stream is None:
+                stream = yt.streams.filter(res="360p", file_extension='mp4', only_video=False).first()
+            if stream is None:
+                stream = yt.streams.filter(only_audio=True).last()
+            if stream is not None:
+                url2 = stream.url
+            print(url2)
 
         video = {
             "videoId": video_id,
@@ -80,9 +97,33 @@ def getVideosIds(key, channe_id, title_filter = None):
     if not isExist:
         # Create a new directory because it does not exist
         os.makedirs(generated_catalog_path)
-        print("The new directory is created! "+generated_catalog_path)
+        print("The new directory is created! " + generated_catalog_path)
 
-    generator.generate(generated_catalog_path + channe_id + ".rss", title, desc, author, link, imgurl, videos)
+    generator.generate(generated_catalog_path + channel_id + ".rss", title, desc, author, link, imgurl, videos)
+
+
+def getRssData(channel_id):
+    rss_file = catalog_path + "/generated/" + channel_id + ".rss"
+    # Check whether the specified path exists or not
+    isExist = os.path.exists(rss_file)
+    if not isExist:
+        print("RSS file {0} doesn't exist.".format(rss_file))
+        return None
+    with open(rss_file, 'r') as f:
+        data = f.read()
+        Bs_data = BeautifulSoup(data, "lxml")
+        f.close()
+        return Bs_data
+
+
+def getLinkFromRssFile(guid, rss_data):
+    item = rss_data.find("guid", string=guid)
+    if item is not None:
+        url = item.parent.enclosure.get("url")
+        print("{0} - LINK FOUND IN RSS".format(guid))
+        return url
+    print("GUID not found")
+    return None
 
 
 def disableSSL():

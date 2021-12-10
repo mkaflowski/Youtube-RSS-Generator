@@ -4,3 +4,7 @@ Youtube-RSS-Generator
 pip install pytube
 
 pip install google-api-python-client
+
+pip install beautifulsoup4
+
+pip install lxml

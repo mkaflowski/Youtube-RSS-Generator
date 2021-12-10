@@ -96,7 +96,7 @@ def getFiles(dirname, extensions=None, recursive=False):
     return sorted(set(selectedFiles))
 
 
-def buildItem(link, title, guid=None, description="", pubDate=None, indent="   ", extraTags=None):
+def buildItem(link, title, guid=None, description="", pubDate=None, indent="   ", extraTags=None, url = None):
     '''
     Generate a RSS 2 item and return it as a string.
     Parameters
@@ -197,7 +197,7 @@ def buildItem(link, title, guid=None, description="", pubDate=None, indent="   "
         guid = link
 
     guid = "{0}<guid isPermaLink=\"false\">{1}</guid>\n".format(indent * 3, guid)
-    encl = "{0}<enclosure url=\"{1}\"/>\n".format(indent * 3, link)
+    encl = "{0}<enclosure url=\"{1}\"/>\n".format(indent * 3, url)
     link = "{0}<link>{1}</link>\n".format(indent * 3, link)
     title = "{0}<title>{1}</title>\n".format(indent * 3, saxutils.escape(title))
     descrption = "{0}<description>{1}</description>\n".format(indent * 3, saxutils.escape(description))
@@ -399,7 +399,7 @@ def generate(outfile, title, description, author, link, imgurl, videos):
     for video in videos:
         outfp.write(buildItem(link="https://www.youtube.com/watch?v=" + video["videoId"], title=video["title"],
                               guid=video["videoId"], description=video["desc"],
-                              pubDate=video["published"]).encode('utf-8', 'replace').decode() + "\n")
+                              pubDate=video["published"], url=video["url"]).encode('utf-8', 'replace').decode() + "\n",)
 
     # for item in items:
     #     outfp.write(item.encode('utf-8', 'replace').decode() + "\n")
