@@ -40,7 +40,7 @@ def getVideosIds(key, channe_id, title_filter = None):
     items = []
     items += response["items"]
     if title_filter is not None:
-        items = list(filter(lambda it: title_filter in it["snippet"]["title"].lower(), items))
+        items = list(filter(lambda it: title_filter.lower() in it["snippet"]["title"].lower(), items))
     limit = 5
     items = items[:limit]
     print(f"total: {len(items)}")
