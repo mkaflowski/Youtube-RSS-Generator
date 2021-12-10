@@ -10,7 +10,7 @@ import sys
 catalog_path = os.path.dirname(sys.argv[0])
 
 
-def getVideosIds(key, channe_id):
+def getVideosIds(key, channe_id, title_filter = None):
     youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=key)
 
     request = youtube.channels().list(
@@ -39,7 +39,9 @@ def getVideosIds(key, channe_id):
 
     items = []
     items += response["items"]
-    limit = 1
+    if title_filter is not None:
+        items = list(filter(lambda it: title_filter in it["snippet"]["title"].lower(), items))
+    limit = 5
     items = items[:limit]
     print(f"total: {len(items)}")
 
@@ -94,9 +96,8 @@ def disableSSL():
 
 # disableSSL()
 
-video_ids = []
 try:
-    getVideosIds(apiKeyList[0], "UCapiydRNc88rlAYcgzjPYGg")
+    getVideosIds(apiKeyList[0], "UCapiydRNc88rlAYcgzjPYGg", "rozmowa")
 except HttpError as err:
     print("An exception occurred: {0}".format(err))
-    getVideosIds(apiKeyList[1], "UCapiydRNc88rlAYcgzjPYGg")
+    getVideosIds(apiKeyList[1], "UCapiydRNc88rlAYcgzjPYGg", "rozmowa")
