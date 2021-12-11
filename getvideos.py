@@ -7,6 +7,10 @@ from apiKey import apiKeyList
 import os
 import sys
 from bs4 import BeautifulSoup
+from urllib import parse
+from urllib.parse import urlparse
+
+
 
 catalog_path = os.path.dirname(sys.argv[0])
 
@@ -25,7 +29,6 @@ def getVideosIds(key, channel_id, title_filter=None, playlist_id=None, limit=5):
         items = list(filter(lambda it: title_filter.lower() in it["snippet"]["title"].lower(), items))
     items = items[:limit]
     print(f"total: {len(items)}")
-
 
     videos = []
 
@@ -177,8 +180,37 @@ def disableSSL():
 
 # disableSSL()
 
-try:
-    getVideosIds(apiKeyList[0], channel_id=None, playlist_id="PLi6mayoXmypQ4iGlGnKWhw0Acy5Wxc4kV")
-except HttpError as err:
-    print("An exception occurred: {0}".format(err))
-    getVideosIds(apiKeyList[1], "UCapiydRNc88rlAYcgzjPYGg", "rozmowa")
+def loadLinkToGenerate():
+    print("Reading list.txt file: ")
+    list = []
+    f = open(catalog_path+"/list.txt", "r")
+    for line in f:
+        info = {}
+
+        try:
+            query_def = parse.parse_qs(parse.urlparse(line).query)['list'][0]
+            info["playlist"] = query_def
+            print(query_def)
+        except:
+            if "channel/" in line:
+                o = urlparse(line)
+                channel_id = o.path.strip("/channel/")
+                info["channel"] = channel_id
+                print(channel_id)
+        try:
+            filter = parse.parse_qs(parse.urlparse(line).query)['filter'][0]
+            info["filter"] = filter
+            print(filter)
+        except:
+            print("No filter")
+
+        list.append(info)
+
+
+list = loadLinkToGenerate()
+#
+# try:
+#     getVideosIds(apiKeyList[0], channel_id=None, playlist_id="PLi6mayoXmypQ4iGlGnKWhw0Acy5Wxc4kV")
+# except HttpError as err:
+#     print("An exception occurred: {0}".format(err))
+#     getVideosIds(apiKeyList[1], "UCapiydRNc88rlAYcgzjPYGg", "rozmowa")
