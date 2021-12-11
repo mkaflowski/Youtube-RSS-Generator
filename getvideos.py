@@ -208,17 +208,17 @@ def loadLinkToGenerate():
         info = {"channel": None, "playlist": None, "filter": None}
         try:
             query_def = parse.parse_qs(parse.urlparse(line).query)['list'][0]
-            info["playlist"] = query_def
+            info["playlist"] = query_def.replace("%0A", "").replace('\n', '').replace('\r', '')
             print(query_def)
         except:
             if "channel/" in line:
                 o = urlparse(line)
                 channel_id = o.path.strip("/channel/")
-                info["channel"] = channel_id
+                info["channel"] = channel_id.replace("%0A", "").replace('\n', '').replace('\r', '')
                 print(channel_id)
         try:
             filter = parse.parse_qs(parse.urlparse(line).query)['filter'][0]
-            info["filter"] = filter
+            info["filter"] = filter.replace("%0A", "").replace('\n', '').replace('\r', '')
             print(filter)
         except:
             print("No filter")
@@ -239,8 +239,11 @@ for item in job_list:
         getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"],
                      title_filter=item["filter"])
     except HttpError as err:
-        print("An exception occurred: {0}".format(err))
-        i = (i + 1) % len(apiKeyList)
-        getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"],
-                     title_filter=item["filter"])
-        continue
+        try:
+            print("An exception occurred: {0}".format(err))
+            i = (i + 1) % len(apiKeyList)
+            getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"],
+                         title_filter=item["filter"])
+        except:
+            print("An exception occurred: {0}".format(err))
+            continue
