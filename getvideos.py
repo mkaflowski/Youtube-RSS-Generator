@@ -65,15 +65,15 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=100
         print(url2)
 
         try:
-            if url2 is None or random.randint(1, 10) == 1:
+            if url2 is None or random.randint(1, 15) == 1:
                 print(video_id)
 
                 yt = YouTube('http://youtube.com/{0}'.format(video_id))
-                stream = yt.streams.filter(res="720p", file_extension='mp4', only_video=False).first()
+                stream = yt.streams.filter(only_audio=True).last()
+                if stream is None:
+                    stream = yt.streams.filter(res="720p", file_extension='mp4', only_video=False).first()
                 if stream is None:
                     stream = yt.streams.filter(res="360p", file_extension='mp4', only_video=False).first()
-                if stream is None:
-                    stream = yt.streams.filter(only_audio=True).last()
                 if stream is not None:
                     url2 = stream.url
                 print(url2)
@@ -243,3 +243,4 @@ for item in job_list:
         i = (i + 1) % len(apiKeyList)
         getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"],
                      title_filter=item["filter"])
+        continue
