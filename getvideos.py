@@ -1,16 +1,14 @@
-import googleapiclient.discovery
-from googleapiclient.errors import HttpError
-from pytube import YouTube
-from datetime import datetime as dt
-import generator
-from apiKey import apiKeyList
 import os
 import sys
-from bs4 import BeautifulSoup
+from datetime import datetime as dt
 from urllib import parse
 from urllib.parse import urlparse
 
+import googleapiclient.discovery
+from bs4 import BeautifulSoup
+from pytube import YouTube
 
+import generator
 
 catalog_path = os.path.dirname(sys.argv[0])
 
