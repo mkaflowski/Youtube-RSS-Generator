@@ -13,6 +13,9 @@ from xml.sax import saxutils
 import locale
 import os
 import sys
+import urllib.parse
+from requests.utils import requote_uri
+
 from datetime import datetime
 
 from optparse import OptionParser
@@ -96,7 +99,7 @@ def getFiles(dirname, extensions=None, recursive=False):
     return sorted(set(selectedFiles))
 
 
-def buildItem(link, title, guid=None, description="", pubDate=None, indent="   ", extraTags=None, url = None):
+def buildItem(link, title, guid=None, description="", pubDate=None, indent="   ", extraTags=None, url = None, image=None):
     '''
     Generate a RSS 2 item and return it as a string.
     Parameters
@@ -197,9 +200,10 @@ def buildItem(link, title, guid=None, description="", pubDate=None, indent="   "
         guid = link
 
     guid = "{0}<guid isPermaLink=\"false\">{1}</guid>\n".format(indent * 3, guid)
-    encl = "{0}<enclosure url=\"{1}\"/>\n".format(indent * 3, url)
-    link = "{0}<link>{1}</link>\n".format(indent * 3, link)
+    encl = "{0}<enclosure url=\"{1}\"/>\n".format(indent * 3, requote_uri(url))
+    link = "{0}<link>{1}</link>\n".format(indent * 3, requote_uri(link))
     title = "{0}<title>{1}</title>\n".format(indent * 3, saxutils.escape(title))
+    image = "{0}<itunes:image href=\"{1}\"/>\n".format(indent * 3, requote_uri(image))
     descrption = "{0}<description>{1}</description>\n".format(indent * 3, saxutils.escape(description))
 
     if pubDate is not None:
@@ -226,8 +230,8 @@ def buildItem(link, title, guid=None, description="", pubDate=None, indent="   "
             extra += "{0}<{1}{2}".format(indent * 3, name, params)
             extra += "{0}\n".format("/>" if value is None else ">{0}</{1}>".format(value, name))
 
-    return "{0}<item>\n{1}{2}{3}{4}{5}{6}{7}{0}</item>".format(indent * 2, guid, link, encl, title,
-                                                               descrption, pubDate, extra)
+    return "{0}<item>\n{1}{2}{3}{4}{5}{6}{7}{8}{0}</item>".format(indent * 2, guid, link, encl, title,
+                                                               descrption, pubDate, image, extra)
 
 
 def getTitle(filename, use_metadata=False):
@@ -399,7 +403,7 @@ def generate(outfile, channel_info, videos):
     for video in videos:
         outfp.write(buildItem(link="https://www.youtube.com/watch?v=" + video["videoId"], title=video["title"],
                               guid=video["videoId"], description=video["desc"],
-                              pubDate=video["published"], url=video["url"]).encode('utf-8', 'replace').decode() + "\n",)
+                              pubDate=video["published"], url=video["url"], image=video["image"]).encode('utf-8', 'replace').decode() + "\n",)
 
     # for item in items:
     #     outfp.write(item.encode('utf-8', 'replace').decode() + "\n")

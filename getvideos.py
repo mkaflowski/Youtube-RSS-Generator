@@ -1,9 +1,11 @@
 import os
 import sys
+import urllib
 from datetime import datetime as dt
 from urllib import parse
 from urllib.parse import urlparse
 import random
+from requests.utils import requote_uri
 
 import googleapiclient.discovery
 from bs4 import BeautifulSoup
@@ -14,7 +16,13 @@ import generator
 from apiKey import apiKeyList
 
 catalog_path = os.path.dirname(sys.argv[0])
+if catalog_path != "":
+    catalog_path += "/"
 
+print("STARTING...")
+
+def htmlspecialchars(content):
+    return content.replace("&", "&amp;").replace('"', "&quot;").replace("'", "&#039;").replace("<", "&lt;").replace(">", "&gt;")
 
 def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=100):
     youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=key)
@@ -44,7 +52,7 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=100
 
         title2 = item["snippet"]["title"]
         desc2 = item["snippet"]["description"]
-        image2 = item["snippet"]["thumbnails"]["medium"]["url"]
+        image2 = item["snippet"]["thumbnails"]["high"]["url"]
 
         published_at = item["snippet"]["publishedAt"].replace("T", " ").replace("Z", " ").rstrip()
         date_obj = dt.strptime(published_at, '%Y-%m-%d %H:%M:%S')
@@ -56,16 +64,21 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=100
             url2 = getLinkFromRssFile(video_id, rss_data=rss_file_data)
         print(url2)
 
-        if url2 is None:
-            yt = YouTube('http://youtube.com/{0}'.format(video_id))
-            stream = yt.streams.filter(res="720p", file_extension='mp4', only_video=False).first()
-            if stream is None:
-                stream = yt.streams.filter(res="360p", file_extension='mp4', only_video=False).first()
-            if stream is None:
-                stream = yt.streams.filter(only_audio=True).last()
-            if stream is not None:
-                url2 = stream.url
-            print(url2)
+        try:
+            if url2 is None or random.randint(1, 10) == 1:
+                print(video_id)
+
+                yt = YouTube('http://youtube.com/{0}'.format(video_id))
+                stream = yt.streams.filter(res="720p", file_extension='mp4', only_video=False).first()
+                if stream is None:
+                    stream = yt.streams.filter(res="360p", file_extension='mp4', only_video=False).first()
+                if stream is None:
+                    stream = yt.streams.filter(only_audio=True).last()
+                if stream is not None:
+                    url2 = stream.url
+                print(url2)
+        except:
+            continue
 
         video = {
             "videoId": video_id,
@@ -73,14 +86,14 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=100
             "desc": desc2,
             "image": image2,
             "published": published_at,
-            "url": url2
+            "url": htmlspecialchars(url2)
         }
 
         videos.append(video)
     # except:
     #     print("Something went wrong  with {0}".format(item))
 
-    generated_catalog_path = catalog_path + "/generated/"
+    generated_catalog_path = catalog_path + "generated/"
     # Check whether the specified path exists or not
     isExist = os.path.exists(generated_catalog_path)
     if not isExist:
@@ -151,7 +164,7 @@ def getPlaylistInfo(pl_id, youtube):
 
 
 def getRssData(channel_id):
-    rss_file = catalog_path + "/generated/" + channel_id + ".rss"
+    rss_file = catalog_path + "generated/" + channel_id + ".rss"
     # Check whether the specified path exists or not
     isExist = os.path.exists(rss_file)
     if not isExist:
@@ -188,7 +201,7 @@ def disableSSL():
 def loadLinkToGenerate():
     print("Reading list.txt file: ")
     list = []
-    f = open(catalog_path + "/list.txt", "r")
+    f = open(catalog_path + "list.txt", "r")
     for line in f:
         if line.startswith('#'):
             continue
@@ -214,6 +227,7 @@ def loadLinkToGenerate():
     return list
 
 
+print("LETS GO")
 job_list = loadLinkToGenerate()
 random.shuffle(job_list)
 print(job_list)
@@ -222,8 +236,10 @@ for item in job_list:
     i = 0
     try:
         i = random.randint(0, len(apiKeyList) - 1)
-        getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"], title_filter=item["filter"])
+        getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"],
+                     title_filter=item["filter"])
     except HttpError as err:
         print("An exception occurred: {0}".format(err))
         i = (i + 1) % len(apiKeyList)
-        getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"], title_filter=item["filter"])
+        getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"],
+                     title_filter=item["filter"])
