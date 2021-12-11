@@ -3,17 +3,20 @@ import sys
 from datetime import datetime as dt
 from urllib import parse
 from urllib.parse import urlparse
+import random
 
 import googleapiclient.discovery
 from bs4 import BeautifulSoup
+from googleapiclient.errors import HttpError
 from pytube import YouTube
 
 import generator
+from apiKey import apiKeyList
 
 catalog_path = os.path.dirname(sys.argv[0])
 
 
-def getVideosIds(key, channel_id, title_filter=None, playlist_id=None, limit=5):
+def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=100):
     youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=key)
 
     if playlist_id is None:
@@ -22,6 +25,8 @@ def getVideosIds(key, channel_id, title_filter=None, playlist_id=None, limit=5):
     else:
         channel_info = getPlaylistInfo(playlist_id, youtube)
         items = getItemsForPlaylist(playlist_id, youtube)
+
+    print("GENERATING: " + channel_info["title"] + " - " + channel_info["link"])
 
     if title_filter is not None:
         items = list(filter(lambda it: title_filter.lower() in it["snippet"]["title"].lower(), items))
@@ -90,7 +95,7 @@ def getItemsForChannel(channel_id, youtube):
     request = youtube.search().list(
         part="snippet,id",
         channelId=channel_id,
-        maxResults=50,
+        maxResults=100,
         type="video",
         order="date"
     )
@@ -103,9 +108,11 @@ def getItemsForPlaylist(playlist_id, youtube):
     request = youtube.playlistItems().list(
         part="snippet,id",
         playlistId=playlist_id,
+        maxResults=100,
     )
     response = request.execute()
     items = response["items"]
+    print(len(items))
     return items
 
 
@@ -181,10 +188,11 @@ def disableSSL():
 def loadLinkToGenerate():
     print("Reading list.txt file: ")
     list = []
-    f = open(catalog_path+"/list.txt", "r")
+    f = open(catalog_path + "/list.txt", "r")
     for line in f:
-        info = {}
-
+        if line.startswith('#'):
+            continue
+        info = {"channel": None, "playlist": None, "filter": None}
         try:
             query_def = parse.parse_qs(parse.urlparse(line).query)['list'][0]
             info["playlist"] = query_def
@@ -203,12 +211,19 @@ def loadLinkToGenerate():
             print("No filter")
 
         list.append(info)
+    return list
 
 
-list = loadLinkToGenerate()
-#
-# try:
-#     getVideosIds(apiKeyList[0], channel_id=None, playlist_id="PLi6mayoXmypQ4iGlGnKWhw0Acy5Wxc4kV")
-# except HttpError as err:
-#     print("An exception occurred: {0}".format(err))
-#     getVideosIds(apiKeyList[1], "UCapiydRNc88rlAYcgzjPYGg", "rozmowa")
+job_list = loadLinkToGenerate()
+random.shuffle(job_list)
+print(job_list)
+
+for item in job_list:
+    i = 0
+    try:
+        i = random.randint(0, len(apiKeyList) - 1)
+        getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"], title_filter=item["filter"])
+    except HttpError as err:
+        print("An exception occurred: {0}".format(err))
+        i = (i + 1) % len(apiKeyList)
+        getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"], title_filter=item["filter"])
