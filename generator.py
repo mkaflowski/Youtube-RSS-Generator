@@ -377,24 +377,24 @@ def fileToItem(host, fname, pubDate, use_metadata=False):
                      pubDate=pubDate, extraTags=[enclosure])
 
 
-def generate(outfile, title, description, author, link, imgurl, videos):
+def generate(outfile, channel_info, videos):
     outfp = open(outfile, "w", encoding='utf-8')
 
     outfp.write(
         '<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:atom="http://www.w3.org/2005/Atom" version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:anchor="https://anchor.fm/xmlns">\n')
     outfp.write('   <channel>\n')
-    outfp.write('      <atom:link href="{0}" rel="self" type="application/rss+xml" />\n'.format(link))
-    outfp.write('      <title>{0}</title>\n'.format(saxutils.escape(title.encode('utf-8', 'replace').decode())))
-    outfp.write('      <description>{0}</description>\n'.format(description).encode('utf-8', 'replace').decode())
-    outfp.write('      <itunes:author>{0}</itunes:author>\n'.format(author.encode('utf-8', 'replace').decode()))
-    outfp.write('      <link>{0}</link>\n'.format(link))
+    outfp.write('      <atom:link href="{0}" rel="self" type="application/rss+xml" />\n'.format(channel_info["link"]))
+    outfp.write('      <title>{0}</title>\n'.format(saxutils.escape(channel_info["title"].encode('utf-8', 'replace').decode())))
+    outfp.write('      <description>{0}</description>\n'.format(channel_info["desc"]).encode('utf-8', 'replace').decode())
+    outfp.write('      <itunes:author>{0}</itunes:author>\n'.format(channel_info["author"].encode('utf-8', 'replace').decode()))
+    outfp.write('      <link>{0}</link>\n'.format(channel_info["link"]))
 
     outfp.write("      <image>\n")
-    outfp.write("         <url>{0}</url>\n".format(imgurl))
-    outfp.write("         <title>{0}</title>\n".format(saxutils.escape(title)))
-    outfp.write("         <link>{0}</link>\n".format(link))
+    outfp.write("         <url>{0}</url>\n".format(channel_info["imgurl"]))
+    outfp.write("         <title>{0}</title>\n".format(saxutils.escape(channel_info["title"])))
+    outfp.write("         <link>{0}</link>\n".format(channel_info["link"]))
     outfp.write("      </image>\n")
-    outfp.write('      <itunes:image href="{0}"/>\n'.format(imgurl))
+    outfp.write('      <itunes:image href="{0}"/>\n'.format(channel_info["imgurl"]))
 
     for video in videos:
         outfp.write(buildItem(link="https://www.youtube.com/watch?v=" + video["videoId"], title=video["title"],

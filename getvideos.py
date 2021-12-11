@@ -11,48 +11,31 @@ from bs4 import BeautifulSoup
 catalog_path = os.path.dirname(sys.argv[0])
 
 
-def getVideosIds(key, channel_id, title_filter=None):
+def getVideosIds(key, channel_id, title_filter=None, playlist_id=None, limit=5):
     youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=key)
 
-    request = youtube.channels().list(
-        part="snippet",
-        id=channel_id,
-    )
-    response = request.execute()
-    print(response)
-    title = response["items"][0]["snippet"]["title"]
-    desc = response["items"][0]["snippet"]["description"]
-    author = title
-    id = response["items"][0]["id"]
-    link = "https://www.youtube.com/channel/" + id
-    print(link)
-    imgurl = response["items"][0]["snippet"]["thumbnails"]["medium"]["url"]
+    if playlist_id is None:
+        channel_info = getChannelInfo(channel_id, youtube)
+        items = getItemsForChannel(channel_id, youtube)
+    else:
+        channel_info = getPlaylistInfo(playlist_id, youtube)
+        items = getItemsForPlaylist(playlist_id, youtube)
 
-    request = youtube.search().list(
-        part="snippet,id",
-        channelId=channel_id,
-        maxResults=50,
-        type="video",
-        order="date"
-    )
-    response = request.execute()
-    print(response)
-
-    items = []
-    items += response["items"]
     if title_filter is not None:
         items = list(filter(lambda it: title_filter.lower() in it["snippet"]["title"].lower(), items))
-    limit = 8
     items = items[:limit]
     print(f"total: {len(items)}")
 
-    # return
 
     videos = []
+
     for item in items:
-        print(item)
         # try:
-        video_id = item["id"]["videoId"]
+        if playlist_id is None:
+            video_id = item["id"]["videoId"]
+        else:
+            video_id = item["snippet"]["resourceId"]["videoId"]
+
         title2 = item["snippet"]["title"]
         desc2 = item["snippet"]["description"]
         image2 = item["snippet"]["thumbnails"]["medium"]["url"]
@@ -62,7 +45,7 @@ def getVideosIds(key, channel_id, title_filter=None):
         published_at = dt.strftime(date_obj, "%a, %d %b %Y %H:%M:%S +0000")
 
         url2 = None
-        rss_file_data = getRssData(channel_id)
+        rss_file_data = getRssData(channel_info["id"])
         if rss_file_data is not None:
             url2 = getLinkFromRssFile(video_id, rss_data=rss_file_data)
         print(url2)
@@ -99,7 +82,64 @@ def getVideosIds(key, channel_id, title_filter=None):
         os.makedirs(generated_catalog_path)
         print("The new directory is created! " + generated_catalog_path)
 
-    generator.generate(generated_catalog_path + channel_id + ".rss", title, desc, author, link, imgurl, videos)
+    generator.generate(generated_catalog_path + channel_info["id"] + ".rss", channel_info, videos)
+
+
+def getItemsForChannel(channel_id, youtube):
+    request = youtube.search().list(
+        part="snippet,id",
+        channelId=channel_id,
+        maxResults=50,
+        type="video",
+        order="date"
+    )
+    response = request.execute()
+    items = response["items"]
+    return items
+
+
+def getItemsForPlaylist(playlist_id, youtube):
+    request = youtube.playlistItems().list(
+        part="snippet,id",
+        playlistId=playlist_id,
+    )
+    response = request.execute()
+    items = response["items"]
+    return items
+
+
+def getChannelInfo(channel_id, youtube):
+    request = youtube.channels().list(
+        part="snippet",
+        id=channel_id,
+    )
+    response = request.execute()
+    channel_info = {}
+    channel_info["title"] = response["items"][0]["snippet"]["title"]
+    channel_info["desc"] = response["items"][0]["snippet"]["description"]
+    channel_info["author"] = response["items"][0]["snippet"]["title"]
+    channel_info["id"] = response["items"][0]["id"]
+    channel_info["link"] = "https://www.youtube.com/channel/" + channel_info["id"]
+    channel_info["imgurl"] = response["items"][0]["snippet"]["thumbnails"]["medium"]["url"]
+    return channel_info
+
+
+def getPlaylistInfo(pl_id, youtube):
+    request = youtube.playlists().list(
+        part="snippet",
+        id=pl_id,
+    )
+    response = request.execute()
+    channel_info = {}
+    channel_info["title"] = response["items"][0]["snippet"]["title"]
+    channel_info["desc"] = response["items"][0]["snippet"]["description"]
+    channel_info["author"] = response["items"][0]["snippet"]["channelTitle"]
+    channel_info["id"] = response["items"][0]["id"]
+    channel_info["link"] = "https://www.youtube.com/playlist?list=" + channel_info["id"]
+    channel_info["imgurl"] = response["items"][0]["snippet"]["thumbnails"]["medium"]["url"]
+    channel_info["imgurl"] = response["items"][0]["snippet"]["thumbnails"]["medium"]["url"]
+
+    return channel_info
 
 
 def getRssData(channel_id):
@@ -138,7 +178,7 @@ def disableSSL():
 # disableSSL()
 
 try:
-    getVideosIds(apiKeyList[0], "UCapiydRNc88rlAYcgzjPYGg", "rozmowa")
+    getVideosIds(apiKeyList[0], channel_id=None, playlist_id="PLi6mayoXmypQ4iGlGnKWhw0Acy5Wxc4kV")
 except HttpError as err:
     print("An exception occurred: {0}".format(err))
     getVideosIds(apiKeyList[1], "UCapiydRNc88rlAYcgzjPYGg", "rozmowa")
