@@ -1,5 +1,6 @@
 import os
 import sys
+import threading
 import urllib
 from datetime import datetime as dt
 from urllib import parse
@@ -21,10 +22,13 @@ if catalog_path != "":
 
 print("STARTING...")
 
-def htmlspecialchars(content):
-    return content.replace("&", "&amp;").replace('"', "&quot;").replace("'", "&#039;").replace("<", "&lt;").replace(">", "&gt;")
 
-def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=100):
+def htmlspecialchars(content):
+    return content.replace("&", "&amp;").replace('"', "&quot;").replace("'", "&#039;").replace("<", "&lt;").replace(">",
+                                                                                                                    "&gt;")
+
+
+def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=20):
     youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=key)
 
     if playlist_id is None:
@@ -59,24 +63,24 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=100
         published_at = dt.strftime(date_obj, "%a, %d %b %Y %H:%M:%S +0000")
 
         url2 = None
-        rss_file_data = getRssData(channel_info["id"])
-        if rss_file_data is not None:
-            url2 = getLinkFromRssFile(video_id, rss_data=rss_file_data)
-        print(url2)
+        # rss_file_data = getRssData(channel_info["id"])
+        # if rss_file_data is not None:
+        #     url2 = getLinkFromRssFile(video_id, rss_data=rss_file_data)
+        # print(url2)
 
         try:
-            if url2 is None or random.randint(1, 15) == 1:
-                print(video_id)
+            # if url2 is None or random.randint(1, 15) == 1:
+            print(channel_info["title"] + " " + video_id)
 
-                yt = YouTube('http://youtube.com/{0}'.format(video_id))
+            yt = YouTube('http://youtube.com/{0}'.format(video_id))
+            stream = yt.streams.filter(res="720p", file_extension='mp4', only_video=False).first()
+            if stream is None:
+                stream = yt.streams.filter(res="360p", file_extension='mp4', only_video=False).first()
+            if stream is None:
                 stream = yt.streams.filter(only_audio=True).last()
-                if stream is None:
-                    stream = yt.streams.filter(res="720p", file_extension='mp4', only_video=False).first()
-                if stream is None:
-                    stream = yt.streams.filter(res="360p", file_extension='mp4', only_video=False).first()
-                if stream is not None:
-                    url2 = stream.url
-                print(url2)
+            if stream is not None:
+                url2 = stream.url
+            print(url2)
         except:
             continue
 
@@ -236,8 +240,12 @@ for item in job_list:
     i = 0
     try:
         i = random.randint(0, len(apiKeyList) - 1)
-        getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"],
-                     title_filter=item["filter"])
+        # getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"],
+        #              title_filter=item["filter"])
+        x = threading.Thread(target=getVideosIds, args=(apiKeyList[i], item["channel"], item["playlist"],
+                                                        item["filter"], 10))
+        x.start()
+        # x.join()
     except HttpError as err:
         try:
             print("An exception occurred: {0}".format(err))
