@@ -36,7 +36,7 @@ def htmlspecialchars(content):
                                                                                                                     "&gt;")
 
 
-def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=10):
+def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=50):
     youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=key)
 
     if playlist_id is None:
