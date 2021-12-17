@@ -50,6 +50,8 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=50)
 
     if title_filter is not None:
         items = list(filter(lambda it: title_filter.lower() in it["snippet"]["title"].lower(), items))
+
+    print(f"total: {len(items)}")
     items = items[:limit]
     print(f"total: {len(items)}")
 
@@ -256,7 +258,7 @@ for item in job_list:
         # getVideosIds(apiKeyList[i], channel_id=item["channel"], playlist_id=item["playlist"],
         #              title_filter=item["filter"])
         x = threading.Thread(target=getVideosIds, args=(apiKeyList[i], item["channel"], item["playlist"],
-                                                        item["filter"], 10))
+                                                        item["filter"]))
         x.start()
         # x.join()
     except HttpError as err:
