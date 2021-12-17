@@ -1,6 +1,9 @@
+#!/usr/bin/env python
 import os
 import sys
 import threading
+import sys
+
 import urllib
 from datetime import datetime as dt
 from urllib import parse
@@ -12,9 +15,13 @@ import googleapiclient.discovery
 from bs4 import BeautifulSoup
 from googleapiclient.errors import HttpError
 from pytube import YouTube
+import traceback
 
 import generator
+import sys
+
 from apiKey import apiKeyList
+from apiKey import doenload_php_link
 
 catalog_path = os.path.dirname(sys.argv[0])
 if catalog_path != "":
@@ -23,12 +30,13 @@ if catalog_path != "":
 print("STARTING...")
 
 
+
 def htmlspecialchars(content):
     return content.replace("&", "&amp;").replace('"', "&quot;").replace("'", "&#039;").replace("<", "&lt;").replace(">",
                                                                                                                     "&gt;")
 
 
-def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=20):
+def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=10):
     youtube = googleapiclient.discovery.build("youtube", "v3", developerKey=key)
 
     if playlist_id is None:
@@ -71,17 +79,22 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=20)
         try:
             # if url2 is None or random.randint(1, 15) == 1:
             print(channel_info["title"] + " " + video_id)
+            url2 = doenload_php_link+"?vid="+video_id
 
-            yt = YouTube('http://youtube.com/{0}'.format(video_id))
-            stream = yt.streams.filter(res="720p", file_extension='mp4', only_video=False).first()
-            if stream is None:
-                stream = yt.streams.filter(res="360p", file_extension='mp4', only_video=False).first()
-            if stream is None:
-                stream = yt.streams.filter(only_audio=True).last()
-            if stream is not None:
-                url2 = stream.url
+            #
+            # yt = YouTube('http://youtube.com/{0}'.format(video_id))
+            #
+            # stream = yt.streams.filter(res="720p", file_extension='mp4', only_video=False).first()
+            # if stream is None:
+            #     stream = yt.streams.filter(res="360p", file_extension='mp4', only_video=False).first()
+            # if stream is None:
+            #     stream = yt.streams.filter(only_audio=True).last()
+            # if stream is not None:
+            #     url2 = stream.url
             print(url2)
-        except:
+        except Exception as e:
+            print(e)
+            traceback.print_exc()
             continue
 
         video = {
@@ -205,7 +218,7 @@ def disableSSL():
 def loadLinkToGenerate():
     print("Reading list.txt file: ")
     list = []
-    f = open(catalog_path + "list.txt", "r")
+    f = open(catalog_path + "list.txt", "r",encoding="utf-8")
     for line in f:
         if line.startswith('#'):
             continue
