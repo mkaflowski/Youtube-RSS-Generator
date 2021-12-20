@@ -30,7 +30,6 @@ if catalog_path != "":
 print("STARTING...")
 
 
-
 def htmlspecialchars(content):
     return content.replace("&", "&amp;").replace('"', "&quot;").replace("'", "&#039;").replace("<", "&lt;").replace(">",
                                                                                                                     "&gt;")
@@ -58,7 +57,10 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=50)
     videos = []
 
     for item in items:
+
         # try:
+        if item["snippet"]["liveBroadcastContent"] == "upcoming":
+            continue
         if playlist_id is None:
             video_id = item["id"]["videoId"]
         else:
@@ -80,8 +82,8 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=50)
 
         try:
             # if url2 is None or random.randint(1, 15) == 1:
-            print(channel_info["title"] + " " + video_id)
-            url2 = doenload_php_link+"?vid="+video_id
+            print(channel_info["title"] + " " + title2 + " " + video_id)
+            url2 = doenload_php_link + "?vid=" + video_id
 
             #
             # yt = YouTube('http://youtube.com/{0}'.format(video_id))
@@ -220,7 +222,7 @@ def disableSSL():
 def loadLinkToGenerate():
     print("Reading list.txt file: ")
     list = []
-    f = open(catalog_path + "list.txt", "r",encoding="utf-8")
+    f = open(catalog_path + "list.txt", "r", encoding="utf-8")
     for line in f:
         if line.startswith('#'):
             continue
