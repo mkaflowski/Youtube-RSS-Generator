@@ -58,9 +58,12 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=50)
 
     for item in items:
 
-        # try:
-        if item["snippet"]["liveBroadcastContent"] == "upcoming":
-            continue
+        try:
+            if item["snippet"]["liveBroadcastContent"] == "upcoming":
+                continue
+        except Exception as e:
+            print(e)
+
         if playlist_id is None:
             video_id = item["id"]["videoId"]
         else:
