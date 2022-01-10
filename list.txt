@@ -1,5 +1,5 @@
 # PLAYLISTA CURVA SUD
-#https://www.youtube.com/watch?v=7NNXYEuG7i4&list=PLi6mayoXmypQ4iGlGnKWhw0Acy5Wxc4kV&index=1&t=563s
+https://www.youtube.com/watch?v=7NNXYEuG7i4&list=PLi6mayoXmypQ4iGlGnKWhw0Acy5Wxc4kV&index=1&t=563s
 # WINI (filter = "rozmowa")
 #https://www.youtube.com/channel/UCapiydRNc88rlAYcgzjPYGg?filter=rozmowa
 # GEFORCE Podcast
@@ -7,4 +7,4 @@
 # Antoni Syrek-Dąbrowski PODCAST
 #https://www.youtube.com/watch?v=4atIb-yhnQw&list=PL0MJdZmt3jpg7ECCVtLall6HURpyF6yN_
 #hejt park
-https://www.youtube.com/watch?v=UEk7HGyr_yg&list=PLi6mayoXmypQ7CaRfYIP_K6ZVsrm1CqT5
+#https://www.youtube.com/watch?v=UEk7HGyr_yg&list=PLi6mayoXmypQ7CaRfYIP_K6ZVsrm1CqT5

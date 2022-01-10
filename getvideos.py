@@ -59,9 +59,10 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=50)
     for item in items:
 
         try:
-            if item["snippet"]["liveBroadcastContent"] == "upcoming":
-                continue
-        except Exception as e:
+            if "liveBroadcastContent" in item["snippet"]:
+                if item["snippet"]["liveBroadcastContent"] == "upcoming":
+                    continue
+        except HttpError as e:
             print(e)
 
         if playlist_id is None:
@@ -150,6 +151,18 @@ def getItemsForPlaylist(playlist_id, youtube):
     response = request.execute()
     items = response["items"]
     print(len(items))
+
+    try:
+        if len(items) > 0:
+            info = getVideoInfo(items[0]["snippet"]["resourceId"]["videoId"], youtube)
+            print(info)
+            upcoming = info["items"][0]["snippet"]["liveBroadcastContent"] == "upcoming"
+            if upcoming:
+                print(info["items"][0]["snippet"]["title"] + " - IS UPCOMING - removed")
+                items.pop(0)
+    except Exception as e:
+        print(e)
+
     return items
 
 
@@ -167,6 +180,23 @@ def getChannelInfo(channel_id, youtube):
     channel_info["link"] = "https://www.youtube.com/channel/" + channel_info["id"]
     channel_info["imgurl"] = response["items"][0]["snippet"]["thumbnails"]["medium"]["url"]
     return channel_info
+
+
+def getVideoInfo(video_id, youtube):
+    request = youtube.videos().list(
+        part="snippet",
+        id=video_id,
+    )
+    response = request.execute()
+    return response
+    # channel_info = {}
+    # channel_info["title"] = response["items"][0]["snippet"]["title"]
+    # channel_info["desc"] = response["items"][0]["snippet"]["description"]
+    # channel_info["author"] = response["items"][0]["snippet"]["title"]
+    # channel_info["id"] = response["items"][0]["id"]
+    # channel_info["link"] = "https://www.youtube.com/channel/" + channel_info["id"]
+    # channel_info["imgurl"] = response["items"][0]["snippet"]["thumbnails"]["medium"]["url"]
+    # return channel_info
 
 
 def getPlaylistInfo(pl_id, youtube):
