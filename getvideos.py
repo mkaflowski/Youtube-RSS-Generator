@@ -189,15 +189,6 @@ def getVideoInfo(video_id, youtube):
     )
     response = request.execute()
     return response
-    # channel_info = {}
-    # channel_info["title"] = response["items"][0]["snippet"]["title"]
-    # channel_info["desc"] = response["items"][0]["snippet"]["description"]
-    # channel_info["author"] = response["items"][0]["snippet"]["title"]
-    # channel_info["id"] = response["items"][0]["id"]
-    # channel_info["link"] = "https://www.youtube.com/channel/" + channel_info["id"]
-    # channel_info["imgurl"] = response["items"][0]["snippet"]["thumbnails"]["medium"]["url"]
-    # return channel_info
-
 
 def getPlaylistInfo(pl_id, youtube):
     request = youtube.playlists().list(
