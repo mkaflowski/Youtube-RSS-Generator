@@ -60,7 +60,8 @@ def getVideosIds(key, channel_id, playlist_id=None, title_filter=None, limit=50)
 
         try:
             if "liveBroadcastContent" in item["snippet"]:
-                if item["snippet"]["liveBroadcastContent"] == "upcoming":
+                live_info = item["snippet"]["liveBroadcastContent"]
+                if live_info == "upcoming" or live_info == "live":
                     continue
         except HttpError as e:
             print(e)
@@ -156,9 +157,10 @@ def getItemsForPlaylist(playlist_id, youtube):
         if len(items) > 0:
             info = getVideoInfo(items[0]["snippet"]["resourceId"]["videoId"], youtube)
             print(info)
-            upcoming = info["items"][0]["snippet"]["liveBroadcastContent"] == "upcoming"
+            live_info = info["items"][0]["snippet"]["liveBroadcastContent"]
+            upcoming = live_info == "upcoming" or live_info == "live"
             if upcoming:
-                print(info["items"][0]["snippet"]["title"] + " - IS UPCOMING - removed")
+                print(info["items"][0]["snippet"]["title"] + " - IS UPCOMING OR LIVE - removed")
                 items.pop(0)
     except Exception as e:
         print(e)
